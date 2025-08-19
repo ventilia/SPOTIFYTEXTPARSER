@@ -14,6 +14,18 @@ SPOTIFY_CLIENT_SECRET = 'e3dc93868af24f69b2a6efbe623814f6'
 GENIUS_CLIENT_ID = '7e39MbC9H9y-G0sj-QcfvVrDo27_4So8FcILomWPVWzsXOgrsecL8oeX9iTiieNG'
 GENIUS_CLIENT_SECRET = 'KItl2hbI7A0v1-_pSqf5LvS_daktJ9soWoyHcKPNsMJqJqui7_0kE3-CoBt7c4-u0mtHcWIhftpfdnJMx7hXew'
 
+# ANSI escape-коды для цветов и стилей (bold)
+COLORS = [
+    '\033[31m',  # Красный
+    '\033[32m',  # Зеленый
+    '\033[33m',  # Желтый
+    '\033[34m',  # Синий
+    '\033[35m',  # Фиолетовый
+    '\033[36m',  # Циан
+]
+BOLD = '\033[1m'  # Жирный текст
+RESET = '\033[0m'  # Сброс стилей
+
 # Функция для получения access token Spotify (Client Credentials Flow)
 def get_spotify_access_token():
     """
@@ -137,16 +149,18 @@ def get_plain_lyrics(title, artist, genius_token):
         print(f"Ошибка при запросе Genius: {e}")
         return None
 
-# Функция для динамического вывода synced lyrics
+# Функция для динамического вывода synced lyrics с цветами и bold
 def display_synced_lyrics(lines):
     """
     Выводим synced lyrics с задержками по времени.
     Используем time.sleep для имитации реального времени.
     Перезаписываем строку в консоли для "караоке-эффекта".
+    Каждая строка — bold и другого цвета (чередование).
     Добавляем обработку для плавности и пустых строк.
     """
     start_time = time.time() * 1000  # Текущее время в ms
-    for line in lines:
+    num_colors = len(COLORS)
+    for idx, line in enumerate(lines):
         try:
             timestamp_ms = int(line['startTimeMs'])
             words = line['words'].strip()
@@ -161,19 +175,33 @@ def display_synced_lyrics(lines):
         if delay_ms > 0:
             time.sleep(delay_ms / 1000.0)
 
+        # Выбираем цвет по индексу (цикл)
+        color = COLORS[idx % num_colors]
+        styled_words = f"{color}{BOLD}{words}{RESET}"
+
         # Выводим строку с перезаписью (ljust для очистки остатков предыдущей строки)
-        sys.stdout.write(f"\r{words.ljust(100)}")
+        sys.stdout.write(f"\r{styled_words.ljust(100)}")
         sys.stdout.flush()
 
     print("\nКонец песни.")  # Финальный перевод строки
 
-# Функция для вывода plain lyrics
+# Функция для вывода plain lyrics с цветами и bold
 def display_plain_lyrics(lyrics):
     """
-    Просто печатаем весь текст.
+    Печатаем весь текст с чередованием цветов по строкам.
+    Каждая строка — bold и другого цвета.
     Добавляем атрибуцию Genius.
     """
-    print(lyrics)
+    lines = lyrics.splitlines()  # Разбиваем на строки
+    num_colors = len(COLORS)
+    for idx, line in enumerate(lines):
+        stripped_line = line.strip()
+        if not stripped_line:  # Пропускаем пустые строки
+            print()  # Просто новая строка
+            continue
+        color = COLORS[idx % num_colors]
+        styled_line = f"{color}{BOLD}{stripped_line}{RESET}"
+        print(styled_line)
     print("\nLyrics from Genius.")
 
 # Главная функция
